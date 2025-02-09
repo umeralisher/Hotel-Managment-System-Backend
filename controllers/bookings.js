@@ -1,4 +1,4 @@
-const Booking = require("../models/Booking");
+const Booking = require("../models/booking");
 const Room = require("../models/Room");
 
 const getBookings = async (req, res) => {
@@ -9,13 +9,11 @@ const getBookings = async (req, res) => {
 
     res.status(200).json({ success: true, data: bookings });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Internal Server Error",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };
 
