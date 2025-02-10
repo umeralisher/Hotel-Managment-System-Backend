@@ -17,7 +17,7 @@ const sendResetPasswordEmail = async (email, resetToken) => {
       <p>Hello,</p>
       <p>We received a request to reset your password. If you didn't make this request, you can ignore this email.</p>
       <p>To reset your password, please click the link below:</p>
-      <p><a href="http://localhost:3000/reset-password/${resetToken} target="_blank">Reset Password</a></p>
+      <p><a href="https://our-hotel-project-gamma.vercel.app/reset-password/${resetToken} target="_blank">Reset Password</a></p>
       <p>The link will expire in 1 hour.</p>
       <p>If you need further assistance, please contact our support team.</p>
       <p>Best regards,<br> <strong>UMER ALI SHER</strong></p>
