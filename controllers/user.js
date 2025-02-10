@@ -209,23 +209,22 @@ const resetPassword = async (req, res) => {
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("Decoded Token:", decoded);
     } catch (err) {
+      console.error("JWT Verification Error:", err.message);
       return res.status(400).json({ msg: "Invalid or expired token!" });
     }
-
-    console.log("Decoded Token:", decoded);
 
     const user = await User.findOne({
       _id: decoded.id,
       resetPasswordToken: token,
       resetPasswordTokenExpiry: { $gt: Date.now() },
     });
+    console.log("User Found:", user);
 
     if (!user) {
       return res.status(400).json({ msg: "Invalid or expired token!" });
     }
-
-    console.log("User Found:", user);
 
     user.password = await bcrypt.hash(newPassword, 10);
     user.resetPasswordToken = undefined;
@@ -234,16 +233,15 @@ const resetPassword = async (req, res) => {
     try {
       await user.save();
       console.log("Password Updated Successfully");
+      res.status(200).json({ msg: "Password reset successfully!" });
     } catch (err) {
-      console.error("Error Saving User:", err.message);
-      return res
+      console.error("Save Error:", err.message);
+      res
         .status(500)
         .json({ msg: "Error saving user data", error: err.message });
     }
-
-    res.status(200).json({ msg: "Password reset successfully!" });
   } catch (error) {
-    console.error("Error:", error);
+    console.error("General Error:", error);
     res
       .status(500)
       .json({ msg: "Internal server error", error: error.message });
