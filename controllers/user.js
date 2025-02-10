@@ -62,7 +62,7 @@ const registerUser = async (req, res) => {
 
     if (role === "admin") {
       if (
-        (email.toLowerCase() === "super.admin@gmail.com" ||
+        (email.toLowerCase() === "umeralisher45@gmail.com" ||
           email.toLowerCase() === "admin@gmail.com") &&
         adminCount < 2
       ) {
