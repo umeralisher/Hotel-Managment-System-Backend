@@ -206,6 +206,9 @@ const resetPassword = async (req, res) => {
     console.log("Incoming Token:", token);
     console.log("New Password:", newPassword);
 
+    // Check if JWT_SECRET is loaded
+    console.log("JWT_SECRET:", process.env.JWT_SECRET);
+
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -215,16 +218,21 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ msg: "Invalid or expired token!" });
     }
 
-    const user = await User.findOne({
+    const query = {
       _id: decoded.id,
       resetPasswordToken: token,
       resetPasswordTokenExpiry: { $gt: Date.now() },
-    });
+    };
+    console.log("Find User Query:", query);
+
+    const user = await User.findOne(query);
     console.log("User Found:", user);
 
     if (!user) {
       return res.status(400).json({ msg: "Invalid or expired token!" });
     }
+
+    console.log("New Password Before Hashing:", newPassword);
 
     user.password = await bcrypt.hash(newPassword, 10);
     user.resetPasswordToken = undefined;
@@ -236,12 +244,12 @@ const resetPassword = async (req, res) => {
       res.status(200).json({ msg: "Password reset successfully!" });
     } catch (err) {
       console.error("Save Error:", err.message);
-      res
+      return res
         .status(500)
         .json({ msg: "Error saving user data", error: err.message });
     }
   } catch (error) {
-    console.error("General Error:", error);
+    console.error("General Error:", error.message);
     res
       .status(500)
       .json({ msg: "Internal server error", error: error.message });
