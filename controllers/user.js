@@ -62,8 +62,8 @@ const registerUser = async (req, res) => {
 
     if (role === "admin") {
       if (
-        (email.toLowerCase() === "umeralisher45@gmail.com" ||
-          email.toLowerCase() === "admin@gmail.com") &&
+        (email.toLowerCase() === "umeralisher.developer@gmail.com" ||
+          email.toLowerCase() === "umeralisher.developer@gmail.com") &&
         adminCount < 2
       ) {
         assignedRole = "admin";
