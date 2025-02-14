@@ -6,10 +6,6 @@ const mongoose = require("mongoose");
 // Helper Functions
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-const isValidPhone = (phone) => {
-  return phone && phone.length === 11 && /^03\d{9}$/.test(phone);
-};
-
 // Register User
 const registerUser = async (req, res) => {
   try {
@@ -24,7 +20,6 @@ const registerUser = async (req, res) => {
       address,
     } = req.body;
 
-    // Validate required fields
     if (
       !firstname ||
       !lastname ||
@@ -37,71 +32,87 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ msg: "All fields are required!" });
     }
 
-    // Validate phone number
-    if (!isValidPhone(phone)) {
-      return res.status(400).json({
-        msg: "Phone number must be 11 digits, start with '03', and contain only numeric characters!",
-      });
-    }
-
-    // Check for duplicate email
-    const existingEmail = await User.findOne({ email });
+    // Check for existing email
+    const existingEmail = await User.findOne({ email: email.toLowerCase() });
     if (existingEmail) {
       return res
         .status(400)
-        .json({ msg: "Email already exists, please use another!" });
+        .json({ msg: "Email already exists, use another!" });
     }
 
-    // Check for duplicate username
+    // Check for existing username
     const existingUsername = await User.findOne({ username });
     if (existingUsername) {
       return res
         .status(400)
-        .json({ msg: "Username already taken, please choose another!" });
+        .json({ msg: "Username already taken, choose another!" });
     }
 
-    // Check for duplicate phone
+    // Check for existing phone number
     const existingPhone = await User.findOne({ phone });
     if (existingPhone) {
       return res
         .status(400)
-        .json({ msg: "Phone number already exists, please use another!" });
+        .json({ msg: "Phone number already exists, use another!" });
     }
 
-    // Hash the password
+    // Validate role
+    const adminCount = await User.countDocuments({ role: "admin" });
+    let assignedRole = "client";
+
+    if (role === "admin") {
+      if (
+        (email.toLowerCase() === "umeralisher.developer@gmail.com" ||
+          email.toLowerCase() === "umeralisher.developer@gmail.com") &&
+        adminCount < 2
+      ) {
+        assignedRole = "admin";
+      } else {
+        return res.status(400).json({
+          msg: "Only specific emails can register as admin, or admin limit reached!",
+        });
+      }
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new User({
+    // Create user
+    const newUser = await User.create({
       firstname,
       lastname,
       username,
-      email,
+      email: email.toLowerCase(),
       password: hashedPassword,
-      role,
+      role: assignedRole,
       phone,
       address,
     });
 
-    // Save user
-    await newUser.save();
+    // Generate JWT token
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not defined in environment variables.");
+    }
 
-    // Generate a JWT token
     const token = jwt.sign(
-      { id: newUser._id, role: newUser.role },
+      {
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    res.status(201).json({ msg: "Account created successfully", token });
+    res
+      .status(201)
+      .json({ newUser, token, msg: "Account created successfully" });
   } catch (error) {
-    // Handle validation errors
-    if (error.name === "ValidationError") {
-      const errors = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({ msg: errors[0] });
-    }
-
-    console.error("Registration Error:", error);
-    res.status(500).json({ msg: "Internal Server Error" });
+    console.error("Registration Error:", error.message);
+    res
+      .status(500)
+      .json({ msg: "Internal Server Error", error: error.message });
   }
 };
 
