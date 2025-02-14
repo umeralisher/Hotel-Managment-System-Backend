@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 // Register User
+// Register User
 const registerUser = async (req, res) => {
   try {
     const {
@@ -20,6 +21,7 @@ const registerUser = async (req, res) => {
       address,
     } = req.body;
 
+    // Check required fields
     if (
       !firstname ||
       !lastname ||
@@ -32,7 +34,39 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ msg: "All fields are required!" });
     }
 
-    // Check for existing email
+    // Validate lengths
+    if (firstname.length < 3) {
+      return res
+        .status(400)
+        .json({ msg: "First name must be at least 3 characters long!" });
+    }
+    if (lastname.length < 3) {
+      return res
+        .status(400)
+        .json({ msg: "Last name must be at least 3 characters long!" });
+    }
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ msg: "Password must be at least 6 characters long!" });
+    }
+    if (address.length < 5) {
+      return res
+        .status(400)
+        .json({ msg: "Address must be at least 5 characters long!" });
+    }
+
+    // Phone number validation
+    const phoneRegex = /^03\d{9}$/;
+    if (!phoneRegex.test(phone)) {
+      return res
+        .status(400)
+        .json({
+          msg: "Phone number must start with '03' and be 11 digits long!",
+        });
+    }
+
+    // Existing email, username, phone validations
     const existingEmail = await User.findOne({ email: email.toLowerCase() });
     if (existingEmail) {
       return res
@@ -40,7 +74,6 @@ const registerUser = async (req, res) => {
         .json({ msg: "Email already exists, use another!" });
     }
 
-    // Check for existing username
     const existingUsername = await User.findOne({ username });
     if (existingUsername) {
       return res
@@ -48,7 +81,6 @@ const registerUser = async (req, res) => {
         .json({ msg: "Username already taken, choose another!" });
     }
 
-    // Check for existing phone number
     const existingPhone = await User.findOne({ phone });
     if (existingPhone) {
       return res
