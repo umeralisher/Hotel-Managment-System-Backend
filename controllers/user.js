@@ -3,8 +3,12 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { sendResetPasswordEmail } = require("../controllers/utils/email");
 const mongoose = require("mongoose");
-
+// Helper Functions
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+const isValidPhone = (phone) => {
+  return phone && phone.length === 11 && /^03\d{9}$/.test(phone);
+};
 
 // Register User
 const registerUser = async (req, res) => {
@@ -20,6 +24,7 @@ const registerUser = async (req, res) => {
       address,
     } = req.body;
 
+    // Validate required fields
     if (
       !firstname ||
       !lastname ||
@@ -32,87 +37,71 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ msg: "All fields are required!" });
     }
 
-    // Check for existing email
-    const existingEmail = await User.findOne({ email: email.toLowerCase() });
+    // Validate phone number
+    if (!isValidPhone(phone)) {
+      return res.status(400).json({
+        msg: "Phone number must be 11 digits, start with '03', and contain only numeric characters!",
+      });
+    }
+
+    // Check for duplicate email
+    const existingEmail = await User.findOne({ email });
     if (existingEmail) {
       return res
         .status(400)
-        .json({ msg: "Email already exists, use another!" });
+        .json({ msg: "Email already exists, please use another!" });
     }
 
-    // Check for existing username
+    // Check for duplicate username
     const existingUsername = await User.findOne({ username });
     if (existingUsername) {
       return res
         .status(400)
-        .json({ msg: "Username already taken, choose another!" });
+        .json({ msg: "Username already taken, please choose another!" });
     }
 
-    // Check for existing phone number
+    // Check for duplicate phone
     const existingPhone = await User.findOne({ phone });
     if (existingPhone) {
       return res
         .status(400)
-        .json({ msg: "Phone number already exists, use another!" });
+        .json({ msg: "Phone number already exists, please use another!" });
     }
 
-    // Validate role
-    const adminCount = await User.countDocuments({ role: "admin" });
-    let assignedRole = "client";
-
-    if (role === "admin") {
-      if (
-        (email.toLowerCase() === "umeralisher.developer@gmail.com" ||
-          email.toLowerCase() === "umeralisher.developer@gmail.com") &&
-        adminCount < 2
-      ) {
-        assignedRole = "admin";
-      } else {
-        return res.status(400).json({
-          msg: "Only specific emails can register as admin, or admin limit reached!",
-        });
-      }
-    }
-
-    // Hash password
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
-    const newUser = await User.create({
+    const newUser = new User({
       firstname,
       lastname,
       username,
-      email: email.toLowerCase(),
+      email,
       password: hashedPassword,
-      role: assignedRole,
+      role,
       phone,
       address,
     });
 
-    // Generate JWT token
-    if (!process.env.JWT_SECRET) {
-      throw new Error("JWT_SECRET is not defined in environment variables.");
-    }
+    // Save user
+    await newUser.save();
 
+    // Generate a JWT token
     const token = jwt.sign(
-      {
-        id: newUser._id,
-        username: newUser.username,
-        email: newUser.email,
-        role: newUser.role,
-      },
+      { id: newUser._id, role: newUser.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    res
-      .status(201)
-      .json({ newUser, token, msg: "Account created successfully" });
+    res.status(201).json({ msg: "Account created successfully", token });
   } catch (error) {
-    console.error("Registration Error:", error.message);
-    res
-      .status(500)
-      .json({ msg: "Internal Server Error", error: error.message });
+    // Handle validation errors
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({ msg: errors[0] });
+    }
+
+    console.error("Registration Error:", error);
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 
@@ -167,7 +156,6 @@ const loginUser = async (req, res) => {
 };
 
 // Forget Password
-
 const forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -196,7 +184,6 @@ const forgetPassword = async (req, res) => {
       .json({ msg: "Internal server error", error: error.message });
   }
 };
-
 // Reset Password
 const resetPassword = async (req, res) => {
   try {
