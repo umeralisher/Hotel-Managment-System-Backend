@@ -3,11 +3,11 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { sendResetPasswordEmail } = require("../controllers/utils/email");
 const mongoose = require("mongoose");
-// Helper Functions
+
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 // Register User
-// Register User
+
 const registerUser = async (req, res) => {
   try {
     const {
@@ -59,11 +59,9 @@ const registerUser = async (req, res) => {
     // Phone number validation
     const phoneRegex = /^03\d{9}$/;
     if (!phoneRegex.test(phone)) {
-      return res
-        .status(400)
-        .json({
-          msg: "Phone number must start with '03' and be 11 digits long!",
-        });
+      return res.status(400).json({
+        msg: "Phone number must start with '03' and be 11 digits long!",
+      });
     }
 
     // Existing email, username, phone validations
@@ -141,7 +139,6 @@ const registerUser = async (req, res) => {
       .status(201)
       .json({ newUser, token, msg: "Account created successfully" });
   } catch (error) {
-    console.error("Registration Error:", error.message);
     res
       .status(500)
       .json({ msg: "Internal Server Error", error: error.message });
@@ -233,16 +230,9 @@ const resetPassword = async (req, res) => {
     const { token } = req.params;
     const { newPassword } = req.body;
 
-    console.log("Incoming Token:", token);
-    console.log("New Password:", newPassword);
-
-    // Check if JWT_SECRET is loaded
-    console.log("JWT_SECRET:", process.env.JWT_SECRET);
-
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("Decoded Token:", decoded);
     } catch (err) {
       console.error("JWT Verification Error:", err.message);
       return res.status(400).json({ msg: "Invalid or expired token!" });
@@ -253,16 +243,12 @@ const resetPassword = async (req, res) => {
       resetPasswordToken: token,
       resetPasswordTokenExpiry: { $gt: Date.now() },
     };
-    console.log("Find User Query:", query);
 
     const user = await User.findOne(query);
-    console.log("User Found:", user);
 
     if (!user) {
       return res.status(400).json({ msg: "Invalid or expired token!" });
     }
-
-    console.log("New Password Before Hashing:", newPassword);
 
     user.password = await bcrypt.hash(newPassword, 10);
     user.resetPasswordToken = undefined;
@@ -273,13 +259,11 @@ const resetPassword = async (req, res) => {
       console.log("Password Updated Successfully");
       res.status(200).json({ msg: "Password reset successfully!" });
     } catch (err) {
-      console.error("Save Error:", err.message);
       return res
         .status(500)
         .json({ msg: "Error saving user data", error: err.message });
     }
   } catch (error) {
-    console.error("General Error:", error.message);
     res
       .status(500)
       .json({ msg: "Internal server error", error: error.message });
@@ -302,7 +286,6 @@ const deleteUser = async (req, res) => {
 
     res.status(200).json({ msg: "User deleted successfully" });
   } catch (error) {
-    console.error("Delete User Error:", error.message);
     res
       .status(500)
       .json({ msg: "Internal Server Error", error: error.message });
@@ -331,7 +314,6 @@ const updateUser = async (req, res) => {
 
     res.status(200).json({ msg: "User updated successfully", user });
   } catch (error) {
-    console.error("Update User Error:", error.message);
     res
       .status(500)
       .json({ msg: "Internal Server Error", error: error.message });
@@ -349,7 +331,6 @@ const getAllUsers = async (req, res) => {
 
     res.status(200).json({ users });
   } catch (error) {
-    console.error("Get All Users Error:", error.message);
     res
       .status(500)
       .json({ msg: "Internal Server Error", error: error.message });
