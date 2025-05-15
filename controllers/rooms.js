@@ -88,11 +88,11 @@ const createRooms = async (req, res) => {
 };
 
 // Get all rooms
-// In rooms.js controller
+
 const getAllRooms = async (req, res) => {
   try {
-    const rooms = await Room.find(); // Fetch all rooms from the database
-    res.status(200).json(rooms); // Return the list of rooms
+    const rooms = await Room.find();
+    res.status(200).json(rooms);
   } catch (error) {
     res.status(500).json({ msg: "Internal Server Error", error });
   }

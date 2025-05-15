@@ -12,7 +12,6 @@ const {
 } = require("../controllers/user");
 const User = require("../models/User");
 
-// Register a new user
 router.post("/register", registerUser);
 
 // Login
@@ -22,7 +21,6 @@ router.post("/login", loginUser);
 router.post("/forget-password", forgetPassword);
 router.post("/reset-password/:token", resetPassword);
 
-// Get account details (client/admin only)
 router.get(
   "/account",
   authMiddleware(["client", "admin"]),
@@ -40,13 +38,10 @@ router.get(
   }
 );
 
-// Get all users (admin only)
 router.get("/get-users", authMiddleware(["admin"]), getAllUsers);
 
-// Delete a user (admin only)
 router.delete("/delete/:id", authMiddleware(["admin"]), deleteUser);
 
-// Update user details (admin/client depending on permissions)
 router.put("/update/:id", authMiddleware(["admin", "client"]), updateUser);
 
 module.exports = router;

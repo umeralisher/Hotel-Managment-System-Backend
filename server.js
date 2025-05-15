@@ -7,7 +7,7 @@ const dBConnect = require("./db/dbconfig");
 const bookingRouter = require("./routes/booking");
 const roomsRouter = require("./routes/rooms");
 const userRouter = require("./routes/user");
-const contactRouter = require("./routes/contact"); // Added contact route
+const contactRouter = require("./routes/contact");
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -16,14 +16,14 @@ const port = process.env.PORT || 8000;
 dBConnect();
 
 // Middleware
-app.use(express.json()); // Parse JSON requests
-app.use(cors()); // Enable CORS for cross-origin requests
+app.use(express.json());
+app.use(cors());
 
 // Routes
 app.use("/bookings", bookingRouter);
 app.use("/rooms", roomsRouter);
-app.use("/users", userRouter); // User-related routes
-app.use("/contact", contactRouter); // Contact-related routes
+app.use("/users", userRouter);
+app.use("/contact", contactRouter);
 
 // Default Route
 app.get("/", (req, res) => {
@@ -43,5 +43,3 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
-
-// Start the Server
